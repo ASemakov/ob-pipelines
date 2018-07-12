@@ -174,3 +174,16 @@ class BatchTask(luigi.Task):
         job_id = bc.submit_job(self.job_definition, self.parameters,
             job_name=self.job_name)
         bc.wait_on_job(job_id)
+
+
+class JobTask(luigi.Task):
+
+    @property
+    def db_task_id(self):
+        return getattr(self, "__task_id", None)
+
+    @db_task_id.setter
+    def db_task_id(self, value):
+        setattr(self, "__task_id", value)
+
+    job_id = luigi.parameter.Parameter()

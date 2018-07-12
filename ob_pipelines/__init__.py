@@ -1,9 +1,15 @@
 import logging
 import os
+import traceback
+from datetime import datetime
 
+import luigi
 from mongoengine import connect
 
+from ob_pipelines.batch import JobTask
 from ob_pipelines.config import settings
+# from ob_pipelines.entities import Job, Task
+from ob_pipelines.entities import Job, Task
 
 logger = logging.getLogger(__name__)
 
@@ -17,3 +23,32 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 connect(host=settings.db_connection)
+
+
+@luigi.Task.event_handler(luigi.event.Event.START)
+def luigi_task_start(task):
+    if not isinstance(task, JobTask):
+        return
+    job = Job.objects.get(id=task.job_id)
+    db_task: Task = Task(job=job, name=task.get_task_family(), started_at=datetime.now())
+    db_task.save()
+    task.db_task_id = db_task.id
+
+
+@luigi.Task.event_handler(luigi.event.Event.SUCCESS)
+def luigi_task_success(task):
+    if not isinstance(task, JobTask):
+        return
+    db_task: Task = Task.objects.get(id=task.db_task_id)
+    db_task.completed_at = datetime.now()
+    db_task.save()
+
+
+@luigi.Task.event_handler(luigi.event.Event.FAILURE)
+def luigi_task_failure(task, exc):
+    if not isinstance(task, JobTask):
+        return
+    db_task: Task = Task.objects.get(id=task.db_task_id)
+    db_task.completed_at = datetime.now()
+    db_task.exception = traceback.format_exc()
+    db_task.save()
