@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import luigi
 from luigi.worker import Worker
 
 from ob_pipelines.batch import JobTask
@@ -14,6 +15,11 @@ class SuccessTask(JobTask):
 class FailureTask(JobTask):
     def run(self):
         raise Exception('This is test exception')
+
+
+class SimpleTask(luigi.Task):
+    def run(self):
+        pass
 
 
 class TestTasks:
@@ -38,3 +44,9 @@ class TestTasks:
             worker.run()
         assert Task.objects.count() == 1
         assert Task.objects.get().exception is not None
+
+    def test_task_simple(self):
+        with Worker() as worker:
+            worker.add(SimpleTask())
+            worker.run()
+        assert Task.objects.count() == 0
