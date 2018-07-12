@@ -2,7 +2,7 @@
 SHELL = /bin/bash
 
 dev_install: ../ob-airtable  # Install project as library into current python and dependency if needed
-	pip install -e .
+	pip install -e .[test]
 
 scheduler_start: scheduler_stop  # Start scheduler in background
 	mkdir -p var/logs
