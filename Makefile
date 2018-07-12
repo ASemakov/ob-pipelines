@@ -1,5 +1,8 @@
-.PHONY: scheduler_start scheduler_stop scheduler_nodetach dev_install
+.PHONY: scheduler_start scheduler_stop scheduler_nodetach dev_install test
 SHELL = /bin/bash
+
+test:
+	pytest -v test/local/
 
 dev_install: ../ob-airtable  # Install project as library into current python and dependency if needed
 	pip install -e .[test]
